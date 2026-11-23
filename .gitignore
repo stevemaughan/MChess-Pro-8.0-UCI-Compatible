@@ -1,0 +1,6 @@
+# Build output
+zig-out*/
+.zig-cache/
+
+# The original program's files, which the build reads and which are not part of this repository
+/reference/

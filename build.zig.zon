@@ -1,0 +1,8 @@
+.{
+    .name = .mchess,
+    .version = "0.0.1",
+    .fingerprint = 0xa6aa6c2eb19e7234,
+    .minimum_zig_version = "0.17.1",
+    .dependencies = .{},
+    .paths = .{ "build.zig", "build.zig.zon", "src", "reference/extracted" },
+}
