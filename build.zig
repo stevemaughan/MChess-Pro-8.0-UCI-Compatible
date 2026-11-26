@@ -17,6 +17,11 @@ pub fn build(b: *std.Build) void {
     // build of its own, not a UCI option (owner decision 25).
     const fixes = b.option(bool, "fixes", "Build with the class C fixes on (default) or off, as mchess-original") orelse true;
     options.addOption(bool, "fixes", fixes);
+    // -Dwin7=true builds the engine for Windows 7 and 8: src/win7_io.zig in place of
+    // std.Io.Threaded, which needs Windows 10 (docs/UCI.md, "Windows 7 build"). Windows targets
+    // only, ReleaseFast or ReleaseSafe; use -Dtarget=x86_64-windows.win7 or x86-windows.win7.
+    const win7 = b.option(bool, "win7", "Build the engine for Windows 7 (Windows targets only)") orelse false;
+    options.addOption(bool, "win7", win7);
 
     // The engine library.
     const mod = b.addModule("mchess", .{
@@ -30,7 +35,7 @@ pub fn build(b: *std.Build) void {
     const exe = b.addExecutable(.{
         .name = if (fixes) "mchess" else "mchess-original",
         .root_module = b.createModule(.{
-            .root_source_file = b.path("src/main.zig"),
+            .root_source_file = b.path(if (win7) "src/main_win7.zig" else "src/main.zig"),
             .target = target,
             .optimize = optimize,
             .imports = &.{.{ .name = "mchess", .module = mod }},
@@ -48,11 +53,12 @@ pub fn build(b: *std.Build) void {
     // build is run through the test suite; the others are cross-compiled and, but for the
     // Windows 32-bit one, have never been run (README.md, "Builds").
     const release_step = b.step("release", "Build every shipped executable into zig-out/release/");
-    const release_options = b.addOptions();
-    release_options.addOption([]const u8, "golden_dir", "tests/golden");
-    release_options.addOption(bool, "bench", false);
-    release_options.addOption(bool, "fixes", true);
     for (release_targets) |rt| {
+        const release_options = b.addOptions();
+        release_options.addOption([]const u8, "golden_dir", "tests/golden");
+        release_options.addOption(bool, "bench", false);
+        release_options.addOption(bool, "fixes", true);
+        release_options.addOption(bool, "win7", rt.win7);
         const query = std.Target.Query.parse(.{ .arch_os_abi = rt.triple }) catch @panic("bad release target");
         const resolved = b.resolveTargetQuery(query);
         const rmod = b.createModule(.{
@@ -66,7 +72,7 @@ pub fn build(b: *std.Build) void {
         const rexe = b.addExecutable(.{
             .name = rt.name,
             .root_module = b.createModule(.{
-                .root_source_file = b.path("src/main.zig"),
+                .root_source_file = b.path(if (rt.win7) "src/main_win7.zig" else "src/main.zig"),
                 .target = resolved,
                 .optimize = .ReleaseFast,
                 .strip = true,
@@ -111,12 +117,17 @@ pub fn build(b: *std.Build) void {
 /// The shipped builds (owner decision 40). The Windows 64-bit build is the generic one:
 /// the baseline x86-64, which runs on every 64-bit processor and measured within about 2%
 /// of a build for the newest ones. The Linux and Android files are static. Linux for 64-bit
-/// ARM (a Raspberry Pi, for instance) was added on 2026-11-22 (owner decision 44).
-const ReleaseTarget = struct { name: []const u8, triple: []const u8 };
+/// ARM (a Raspberry Pi, for instance) was added on 2026-11-22 (owner decision 44). The two
+/// Windows 7 builds were added on 2026-11-25 (owner decision 48): the standard Windows builds
+/// need Windows 10, and these run on Windows 7 and 8 (src/win7_io.zig); the 32-bit one also
+/// runs on 64-bit Windows.
+const ReleaseTarget = struct { name: []const u8, triple: []const u8, win7: bool = false };
 const release_targets = [_]ReleaseTarget{
     .{ .name = "mchess-windows-x64", .triple = "x86_64-windows" },
     .{ .name = "mchess-windows-x86", .triple = "x86-windows" },
     .{ .name = "mchess-windows-arm64", .triple = "aarch64-windows" },
+    .{ .name = "mchess-windows7-x64", .triple = "x86_64-windows.win7", .win7 = true },
+    .{ .name = "mchess-windows7-x86", .triple = "x86-windows.win7", .win7 = true },
     .{ .name = "mchess-macos-arm64", .triple = "aarch64-macos" },
     .{ .name = "mchess-linux-x64", .triple = "x86_64-linux-musl" },
     .{ .name = "mchess-linux-arm64", .triple = "aarch64-linux-musl" },

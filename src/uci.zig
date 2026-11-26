@@ -17,6 +17,7 @@ const fen = @import("fen.zig");
 const uci_parse = @import("uci_parse.zig");
 const uci_engine = @import("uci_engine.zig");
 const pipe_io = @import("pipe_io.zig");
+const threads = @import("threads.zig");
 
 const Output = uci_engine.Output;
 const Options = uci_engine.Options;
@@ -471,7 +472,7 @@ pub fn runWithStart(gpa: std.mem.Allocator, io: std.Io, engine: uci_engine.Engin
     session.* = .init(engine, out.output());
     var worker: Worker = .{ .gpa = gpa, .io = io, .session = session };
     defer worker.queue.deinit(gpa);
-    const thread = try std.Thread.spawn(.{}, Worker.main, .{&worker});
+    const thread = try threads.Thread.spawn(Worker, Worker.main, &worker);
     var quit_command = false;
     defer {
         worker.quit(quit_command);

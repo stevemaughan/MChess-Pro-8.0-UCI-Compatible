@@ -29,6 +29,7 @@
 
 const std = @import("std");
 const tablebase = @import("tablebase.zig");
+const os_threads = @import("threads.zig");
 const engine_data = @import("engine_data.zig");
 const tb_names_mod = @import("tb_names.zig");
 
@@ -179,7 +180,7 @@ pub const TbStore = struct {
     }
 
     fn acquire(s: *TbStore) void {
-        while (!s.lock.tryLock()) std.Thread.yield() catch {};
+        while (!s.lock.tryLock()) os_threads.yield();
     }
 
     /// `Use Tablebases` (owner decision 44, 2026-11-22). False: every decompressed file and
@@ -258,13 +259,13 @@ pub const TbStore = struct {
         var job: PreloadJob = .{ .store = s };
         const cpus = std.Thread.getCpuCount() catch 1;
         const want = std.math.clamp(cpus, 1, max_preload_threads);
-        var threads: [max_preload_threads - 1]std.Thread = undefined;
+        var helpers: [max_preload_threads - 1]os_threads.Thread = undefined;
         var spawned: usize = 0;
         while (spawned + 1 < want) : (spawned += 1) {
-            threads[spawned] = std.Thread.spawn(.{}, PreloadJob.run, .{&job}) catch break;
+            helpers[spawned] = os_threads.Thread.spawn(PreloadJob, PreloadJob.run, &job) catch break;
         }
         job.run();
-        for (threads[0..spawned]) |t| t.join();
+        for (helpers[0..spawned]) |t| t.join();
         s.preload_threads = @intCast(spawned + 1);
         s.preload_loads = @atomicLoad(u32, &s.loads, .monotonic) - loads0;
         if (t0) |t| s.preload_ns = @intCast(std.Io.Clock.awake.now(io.?).nanoseconds - t);

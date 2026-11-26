@@ -20,6 +20,8 @@ pub const fen = @import("fen.zig");
 pub const uci_parse = @import("uci_parse.zig");
 pub const uci_engine = @import("uci_engine.zig");
 pub const pipe_io = @import("pipe_io.zig");
+pub const win7_io = @import("win7_io.zig");
+pub const threads = @import("threads.zig");
 pub const uci = @import("uci.zig");
 pub const setup = @import("setup.zig");
 pub const lifted_machine = @import("lifted_machine.zig");
@@ -80,6 +82,8 @@ test {
     _ = @import("uci_parse_test.zig");
     _ = uci_engine;
     _ = pipe_io;
+    _ = win7_io;
+    _ = threads;
     _ = uci;
     _ = @import("uci_test.zig");
     _ = setup;

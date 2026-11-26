@@ -12,7 +12,7 @@
   <img alt="Verified against the original, node for node" src="https://img.shields.io/badge/fidelity-node%20for%20node-8e44ad">
   <img alt="About 2 million nodes a second" src="https://img.shields.io/badge/speed-~2M%20nodes%2Fs-e67e22">
   <img alt="About 2525 Elo on the CCRL Blitz scale" src="https://img.shields.io/badge/Elo-~2525-2980b9">
-  <img alt="Windows, Linux, macOS, Android" src="https://img.shields.io/badge/platforms-Windows%20%7C%20Linux%20%7C%20macOS%20%7C%20Android-555555">
+  <img alt="Windows (7 and later), Linux, macOS, Android" src="https://img.shields.io/badge/platforms-Windows%207%2B%20%7C%20Linux%20%7C%20macOS%20%7C%20Android-555555">
   <a href="LICENSE"><img alt="License: PolyForm Noncommercial 1.0.0" src="https://img.shields.io/badge/license-PolyForm%20Noncommercial-blue"></a>
 </p>
 
@@ -52,7 +52,7 @@ This project takes that MS-DOS program apart and rebuilds it as a modern **UCI c
 - **A proper UCI engine.** Every `go` command, Fischer increments, moves-to-go, pondering, analysis of any legal position, full `info` output with mates shown as mates.
 - **One file.** The opening book and the endgame tablebases are inside the executable. There is nothing to install and no data folder.
 - **38 bugs of the original corrected**, each one documented, including one that made the original play an illegal move.
-- **Written in Zig** 0.17.1, with 435 tests.
+- **Written in Zig** 0.17.1, with 441 tests.
 - **About 2525 Elo** on the CCRL Blitz scale in first tests.
 
 ## Speed
@@ -68,7 +68,7 @@ The rewrite's figures are 1.86 million nodes a second from the start position, 1
 
 ## Download and run
 
-1. Download the executable for your platform from the [Releases](../../releases) page (see [Platforms](#platforms)).
+1. Download the executable for your platform from the [Releases](../../releases) page (see [Platforms](#platforms)). On Windows 10 and 11 take `mchess-windows-x64.exe`; on Windows 7 and 8, `mchess-windows7-x64.exe`.
 2. Add it to your chess GUI as a UCI engine. It has been run in the Shredder and HIARCS GUIs and under `cutechess-cli` and `fastchess`.
 3. Play.
 
@@ -232,19 +232,23 @@ As in the original, the tablebases decide the move at the root when few men are 
 
 ## Platforms
 
-All builds are optimised release builds of the same source.
+All builds are optimised release builds of the same engine.
 
 | File | Platform | Status |
 |---|---|---|
 | `mchess-windows-x64.exe` | Windows, 64-bit Intel and AMD | **Fully tested**: the whole test suite, protocol tests, stress tests and about 13,000 games |
 | `mchess-windows-x86.exe` | Windows, 32-bit | Run: the same node counts as the 64-bit build, a few percent slower |
 | `mchess-windows-arm64.exe` | Windows on ARM | Compiled, not yet run |
+| `mchess-windows7-x64.exe` | Windows 7 and 8, 64-bit | Run on Windows 11: the whole test suite, protocol tests, stress tests, 700 games, and the same moves and node counts as the standard build. Not yet run on Windows 7 itself |
+| `mchess-windows7-x86.exe` | Windows 7 and 8, 32-bit (also runs on 64-bit Windows) | The same |
 | `mchess-macos-arm64` | macOS on Apple silicon | Compiled, not yet run |
 | `mchess-linux-x64` | Linux, 64-bit Intel and AMD | Compiled, not yet run |
 | `mchess-linux-arm64` | Linux, 64-bit ARM (a Raspberry Pi, for instance) | Compiled, not yet run |
 | `mchess-android-arm64` | Android, 64-bit ARM | Compiled, not yet run |
 
 The untested builds come from the same source through Zig's cross-compiler, and nothing in the engine depends on the operating system beyond input, output, the clock and threads. They should work. If you run one, please say how it went.
+
+**Windows 7 and 8.** The standard Windows builds need Windows 10 or later, because the Zig standard library they are built on does. The two `windows7` builds, on the Releases page since 25 November 2026, are the same engine on a small layer of their own for threads, locks, the clock and input and output, using only what Windows 7 provides (`src/win7_io.zig`). They play the same moves, with the same node counts. Each has been checked to import nothing that Windows 7 lacks, but neither has yet been run on a Windows 7 machine: if you try one, a report would be welcome. On Windows 10 and 11, use the standard builds. Details are in [`docs/UCI.md`](docs/UCI.md#windows-7-build).
 
 ## How we know it is faithful
 
